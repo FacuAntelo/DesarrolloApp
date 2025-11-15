@@ -1,12 +1,22 @@
 package ar.edu.utn.frba.expendinator.screens.expenses
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,9 +29,7 @@ fun OcrReviewScreen(
 ) {
     val state by ocrVm.ui.collectAsState()
 
-    LaunchedEffect(Unit) {
-        if (state is OcrUiState.Idle) ocrVm.loadMock()
-    }
+    LaunchedEffect(Unit) { ocrVm.loadMock() }
 
     when (state) {
         is OcrUiState.Loading -> {
@@ -37,29 +45,45 @@ fun OcrReviewScreen(
         }
         is OcrUiState.Preview -> {
             val preview = (state as OcrUiState.Preview)
-            Column(Modifier.fillMaxSize().padding(16.dp)) {
-                Text("Ticket: ${preview.data.receiptId}", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
-                Text("Fecha: ${preview.data.date}  •  Total: ${preview.data.total}", style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.height(12.dp))
-
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(preview.editable) { index, item ->
-                        OcrItemEditor(
-                            item = item,
-                            onChange = { preview.editable[index] = it }
+            val listState = rememberLazyListState()
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Ticket: ${preview.data.receiptId}",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            "Fecha: ${preview.data.date}  •  Total: ${preview.data.total}",
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
 
-                Button(
-                    onClick = { ocrVm.confirm(onDone = onConfirmed) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Text("Confirmar y guardar")
+                itemsIndexed(preview.editable) { index, item ->
+                    OcrItemEditor(
+                        item = item,
+                        onChange = { preview.editable[index] = it }
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = { ocrVm.confirm(onDone = onConfirmed) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("Confirmar y guardar", textAlign = TextAlign.Center)
+                    }
                 }
             }
         }
