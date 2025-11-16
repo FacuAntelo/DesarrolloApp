@@ -37,7 +37,12 @@ export const AuthController = {
       });
     }
 
-    return res.status(201).json({ message: "Usuario registrado con éxito" });
+    const token = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "1d" });
+
+    return res.status(201).json({
+      token,
+      user: { id: userId, email },
+    });
   },
 
   async login(req: Request, res: Response) {
