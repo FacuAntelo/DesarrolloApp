@@ -164,7 +164,11 @@ fun OcrReviewScreen(
                     creatingCategory = false
                     if (success) {
                         preview?.editable?.let { list ->
-                            list[idx] = list[idx].copy(category = name.trim())
+                            val created = expensesVm.categoriesFlow.value.lastOrNull { it.name == name.trim() }
+                            list[idx] = list[idx].copy(
+                                categoryName = name.trim(),
+                                categoryId = created?.id?.toIntOrNull()
+                            )
                         }
                         showAddCategoryDialog = false
                         categoryDialogError = null
@@ -207,15 +211,16 @@ private fun OcrItemEditor(
                 modifier = Modifier.fillMaxWidth()
             )
             var expanded by remember { mutableStateOf(false) }
+            val categoryLabel = item.categoryName ?: "Sin categoría"
             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                 OutlinedTextField(
-                    value = item.category ?: "Sin categoría",
+                    value = categoryLabel,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Categoría") },
                     leadingIcon = {
-                        val color = item.category?.let { name ->
-                            categories.firstOrNull { it.name == name }?.color
+                        val color = item.categoryId?.let { id ->
+                            categories.firstOrNull { it.id == id.toString() }?.color
                         }
                         CategoryColorDot(color)
                     },
@@ -233,7 +238,7 @@ private fun OcrItemEditor(
                         text = { Text("Sin categoría") },
                         onClick = {
                             expanded = false
-                            onChange(item.copy(category = null))
+                            onChange(item.copy(categoryId = null, categoryName = null))
                         }
                     )
                     categories.forEach { category ->
@@ -242,7 +247,7 @@ private fun OcrItemEditor(
                             text = { Text(category.name) },
                             onClick = {
                                 expanded = false
-                                onChange(item.copy(category = category.name))
+                                onChange(item.copy(categoryId = category.id.toIntOrNull(), categoryName = category.name))
                             }
                         )
                     }

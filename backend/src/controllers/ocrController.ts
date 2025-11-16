@@ -2,7 +2,13 @@ import { Request, Response } from "express";
 import { DEFAULT_CATEGORIES } from "../config/defaultCategories.js";
 import { CategoryModel } from "../models/Category.js";
 
-type Item = { title: string; amount: number; category: string; date: string };
+type Item = {
+  title: string;
+  amount: number;
+  categoryId: number | null;
+  categoryName: string | null;
+  date: string;
+};
 
 const CATEGORY_TITLES: Record<string, string[]> = {
   "Supermercado": ["Leche 1L", "Pan lactal", "Queso cremoso", "Detergente", "Fideos", "Yerba"],
@@ -12,7 +18,7 @@ const CATEGORY_TITLES: Record<string, string[]> = {
   "Farmacia": ["Ibuprofeno", "Alcohol", "Jabón líquido", "Protector solar"],
 };
 
-type CategoryTemplate = { name: string; sampleTitles: string[] };
+type CategoryTemplate = { id: number | null; name: string; sampleTitles: string[] };
 
 function todayISO(): string {
   const d = new Date();
@@ -40,20 +46,25 @@ function fallbackTitles(categoryName: string): string[] {
 async function buildCategoryTemplates(userId: number): Promise<CategoryTemplate[]> {
   const categories = await CategoryModel.getAllByUser(userId);
 
-  const names = categories.length
-    ? categories.map((cat) => cat.name)
-    : DEFAULT_CATEGORIES.map((c) => c.name);
+  if (categories.length) {
+    return categories.map((cat) => ({
+      id: cat.id!,
+      name: cat.name,
+      sampleTitles: CATEGORY_TITLES[cat.name] ?? fallbackTitles(cat.name),
+    }));
+  }
 
-  return names.map((name) => ({
-    name,
-    sampleTitles: CATEGORY_TITLES[name] ?? fallbackTitles(name),
+  return DEFAULT_CATEGORIES.map((c) => ({
+    id: null,
+    name: c.name,
+    sampleTitles: CATEGORY_TITLES[c.name] ?? fallbackTitles(c.name),
   }));
 }
 
 function buildRandomItems(categories: CategoryTemplate[]): Item[] {
   const usableCategories = categories.length
     ? categories
-    : [{ name: "Sin categoría", sampleTitles: fallbackTitles("Producto") }];
+    : [{ id: null, name: "Sin categoría", sampleTitles: fallbackTitles("Producto") }];
 
   const date = todayISO();
 
@@ -72,7 +83,8 @@ function buildRandomItems(categories: CategoryTemplate[]): Item[] {
       items.push({
         title,
         amount: Number(amount.toFixed(2)),
-        category: cat.name,
+        categoryId: cat.id,
+        categoryName: cat.name,
         date,
       });
     }
@@ -84,7 +96,8 @@ function buildRandomItems(categories: CategoryTemplate[]): Item[] {
       items.push({
         title,
         amount: Number(amount.toFixed(2)),
-        category: cat.name,
+        categoryId: cat.id,
+        categoryName: cat.name,
         date,
       });
     }
@@ -96,7 +109,7 @@ function buildRandomItems(categories: CategoryTemplate[]): Item[] {
 function aggregateByCategory(items: Item[]) {
   const map = new Map<string, { category: string; amount: number; itemsCount: number; items: Array<{ title: string; amount: number }> }>();
   for (const it of items) {
-    const key = it.category || "Sin categoría";
+    const key = it.categoryName || "Sin categoría";
     if (!map.has(key)) {
       map.set(key, { category: key, amount: 0, itemsCount: 0, items: [] });
     }

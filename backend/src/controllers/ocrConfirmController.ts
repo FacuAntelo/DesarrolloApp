@@ -18,7 +18,8 @@ export const OcrConfirmController = {
       for (const it of items) {
         const title = it.title?.trim();
         const amount = Number(it.amount);
-        const categoryName = it.category || null;
+        const categoryName = it.categoryName || it.category || null;
+        const categoryId = it.categoryId ?? null;
         const dateCandidate = it.date || new Date().toISOString();
 
         let normalizedDate: string;
@@ -30,10 +31,17 @@ export const OcrConfirmController = {
 
         if (!title || isNaN(amount)) continue;
 
-        let categoryId = null;
-        if (categoryName) {
+        let categoryIdToPersist = null;
+        if (categoryId !== null && categoryId !== undefined) {
+          const cat = await CategoryModel.findById(userId, Number(categoryId));
+          if (cat) {
+            categoryIdToPersist = cat.id;
+          }
+        }
+
+        if (!categoryIdToPersist && categoryName) {
           const cat = await CategoryModel.findByName(userId, categoryName);
-          if (cat) categoryId = cat.id;
+          if (cat) categoryIdToPersist = cat.id;
         }
 
         const newExpense = await ExpenseModel.create({
@@ -41,7 +49,7 @@ export const OcrConfirmController = {
           title,
           amount,
           date: normalizedDate,
-          category_id: categoryId
+          category_id: categoryIdToPersist
         });
 
         created.push(newExpense);
