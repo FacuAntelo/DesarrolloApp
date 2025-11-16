@@ -48,6 +48,7 @@ import ar.edu.utn.frba.expendinator.screens.auth.AuthViewModel
 import ar.edu.utn.frba.expendinator.screens.auth.LoginScreen
 import ar.edu.utn.frba.expendinator.screens.auth.RegisterScreen
 import ar.edu.utn.frba.expendinator.screens.budgets.BudgetCreateScreen
+import ar.edu.utn.frba.expendinator.screens.budgets.BudgetEditScreen
 import ar.edu.utn.frba.expendinator.screens.budgets.BudgetScreen
 import ar.edu.utn.frba.expendinator.screens.budgets.BudgetViewModel
 import ar.edu.utn.frba.expendinator.screens.categories.CategoryCreateScreen
@@ -248,6 +249,7 @@ fun AppNavHost() {
                         budgetVm = budgetVm,
                         expensesVm = vm,
                         onNew = { nav.navigate("budget/new") },
+                        onBudgetClicked = { nav.navigate("budget/${it.id}/edit") }
                     )
                 }
 
@@ -255,6 +257,16 @@ fun AppNavHost() {
                     BudgetCreateScreen(
                         budgetVm = budgetVm,
                         expensesVm = vm,
+                        onSaved = { nav.popBackStack() },
+                        onCancel = { nav.popBackStack() }
+                    )
+                }
+                composable("budget/{id}/edit") { backStack ->
+                    val id = backStack.arguments?.getString("id") ?: return@composable
+                    BudgetEditScreen(
+                        budgetVm = budgetVm,
+                        expensesVm = vm,
+                        budgetId = id,
                         onSaved = { nav.popBackStack() },
                         onCancel = { nav.popBackStack() }
                     )
