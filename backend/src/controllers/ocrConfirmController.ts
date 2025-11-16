@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { CategoryModel } from "../models/Category.js";
 import { ExpenseModel } from "../models/Expense.js";
+import { sanitizeDateInput } from "../utils/date.js";
 
 export const OcrConfirmController = {
   async confirm(req: Request, res: Response) {
@@ -18,7 +19,14 @@ export const OcrConfirmController = {
         const title = it.title?.trim();
         const amount = Number(it.amount);
         const categoryName = it.category || null;
-        const date = it.date || new Date().toISOString().slice(0, 10);
+        const dateCandidate = it.date || new Date().toISOString();
+
+        let normalizedDate: string;
+        try {
+          normalizedDate = sanitizeDateInput(dateCandidate);
+        } catch (err) {
+          continue;
+        }
 
         if (!title || isNaN(amount)) continue;
 
@@ -32,7 +40,7 @@ export const OcrConfirmController = {
           user_id: userId,
           title,
           amount,
-          date,
+          date: normalizedDate,
           category_id: categoryId
         });
 
