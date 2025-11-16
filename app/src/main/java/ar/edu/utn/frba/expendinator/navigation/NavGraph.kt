@@ -153,6 +153,8 @@ fun AppNavHost() {
                     LoginScreen(
                         viewModel = authVm,
                         onSuccess = {
+                            vm.refreshAll()
+                            budgetVm.refresh()
                             nav.navigate(Dest.Main.route) {
                                 popUpTo(Dest.Login.route) { inclusive = true }
                             }
@@ -165,6 +167,8 @@ fun AppNavHost() {
                     RegisterScreen(
                         viewModel = authVm,
                         onSuccess = {
+                            vm.refreshAll()
+                            budgetVm.refresh()
                             nav.navigate(Dest.Main.route) {
                                 popUpTo(Dest.Register.route) { inclusive = true }
                             }
@@ -260,6 +264,7 @@ fun AppNavHost() {
                 composable(Dest.OcrReview.route) {
                     OcrReviewScreen(
                         ocrVm,
+                        expensesVm = vm,
                         onConfirmed = {
                             vm.refreshAll()
                             budgetVm.refresh()
